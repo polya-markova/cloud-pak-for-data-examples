@@ -1,0 +1,3 @@
+To ingest a CSV data file into the Open Data for Industries (ODI) storage layer, you use the ODI ingestion workflow.
+You can also follow this process whenever you want to verify that the ingestion flow on the ODI installation is functioning properly.
+For more information, see 
