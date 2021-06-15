@@ -1,0 +1,227 @@
+{
+	"id": "215af15f-9e89-4b98-b970-835f17252c51",
+	"name": "OSDU R3 IBM ODI v2.0.0 ENV",
+	"values": [
+		{
+			"key": "TENANT_ID",
+			"value": "{{data-partition-id}}",
+			"enabled": true
+		},
+		{
+			"key": "CLIENT_ID",
+			"value": "{{keycloak_client_id}}",
+			"enabled": true
+		},		
+		{
+			"key": "CLIENT_SECRET",
+			"value": "{{keycloak_client_secret}}",
+			"enabled": true
+		},
+		{
+			"key": "USER_ID",
+			"value": "{{user_id}}",
+			"enabled": true
+		},		
+		{
+			"key": "USER_PASSWORD",
+			"value": "{{user_password}}",
+			"enabled": true
+		},
+		{
+			"key": "osdu-cpd",
+			"value": "{{osdu-cpd-url}}",
+			"enabled": true
+		},
+		{
+			"key": "access_token",
+			"value": "{{access_token}}",
+			"enabled": true
+		},
+		{
+			"key": "id_token",
+			"value": "{{id_token}}",
+			"enabled": true
+		},
+		{
+			"key": "refresh_token",
+			"value": "{{refresh_token}}",
+			"enabled": true
+		},
+		{
+			"key": "Token_Fetch_URL",
+			"value": "{{keycloak_token_fetch_url}}",
+			"enabled": true
+		},		
+		{
+			"key": "auth_url",
+			"value": "{{keycloak_auth_fetch_url}}",
+			"enabled": true
+		},
+		{
+			"key": "callback_url",
+			"value": "http://localhost:8080",
+			"enabled": true
+		},
+		{
+			"key": "data-partition-id",
+			"value": "opendes",
+			"enabled": true
+		},
+		{
+			"key": "SCOPE",
+			"value": "openid",
+			"enabled": true
+		},
+		{
+			"key": "cloud_platform",
+			"value": "IBM",
+			"enabled": true
+		},
+				
+		{
+			"key": "expiredToken",
+			"value": "",
+			"enabled": true
+		},
+		
+		{
+			"key": "tenantid",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "ctag",
+			"value": "",
+			"enabled": true
+		},
+		{
+			"key": "docs_suffix",
+			"value": "/v2/api-docs",
+			"enabled": true
+		},
+		{
+			"key": "tagName",
+			"value": "opendes-Well-Legal-Tag-ODI890102",
+			"enabled": true
+		},
+		{
+			"key": "record_mid",
+			"value": "999605662766",
+			"enabled": true
+		},
+		{
+			"key": "NewWellUWI",
+			"value": "999505209565",
+			"enabled": true
+		},
+		{
+			"key": "schema_version",
+			"value": "0.2.5",
+			"enabled": true
+		},
+		{
+			"key": "New_ViewerDataGroup",
+			"value": "data.wellboreMarkerdb47059.viewers",
+			"enabled": true
+		},
+		{
+			"key": "New_OwnerDataGroup",
+			"value": "data.default.owner",
+			"enabled": true
+		},
+		{
+			"key": "domain",
+			"value": ".ibm.com",
+			"enabled": true
+		},
+		{
+			"key": "kind",
+			"value": "opendes:osdu:well-master:0.2.1",
+			"enabled": true
+		},
+		{
+			"key": "entityType",
+			"value": "testEntity_101",
+			"enabled": true
+		},
+		{
+			"key": "SchemaID",
+			"value": "SchemaFuncTest:testSource:testEntity_101:1.1.0",
+			"enabled": true
+		},
+		{
+			"key": "WORKFLOW_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-workflow/api/workflow/v1",
+			"enabled": true
+		},
+		{
+			"key": "LEGAL_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-legal/api/legal/v1",
+			"enabled": true
+		},
+		{
+			"key": "STORAGE_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-storage/api/storage/v2",
+			"enabled": true
+		},
+		{
+			"key": "SEARCH_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-search/api/search/v2",
+			"enabled": true
+		},		
+		{
+			"key": "INGEST_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-ingestion/api/ingest/v1",
+			"enabled": true
+		},		
+		{
+			"key": "SCHEMA_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-schema/api/schema-service/v1",
+			"enabled": true
+		},		
+		{
+			"key": "ENTITLEMENTS_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-entitlements/api/entitlements/v1",
+			"enabled": true
+		},		
+		{
+			"key": "WELLBORE_DDMS_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-wellbore",
+			"enabled": true
+		},
+		{
+			"key": "INDEXER_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-indexer/api/indexer/v2",
+			"enabled": true
+		},
+		{
+			"key": "SEISMICDMS_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-seismic/api/v3",
+			"enabled": true
+		},
+		{
+			"key": "DELIVERY_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-delivery/api/delivery/v2",
+			"enabled": true
+		},
+		{
+			"key": "FILE_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-file/api/file/v2",
+			"enabled": true
+		},		
+		{
+			"key": "DATASET_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-dataset/api/dataset/v1",
+			"enabled": true
+		},		
+		{
+			"key": "PARTITION_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-partition/api/partition/v1",
+			"enabled": true
+		}
+		
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2021-04-12T08:26:34.822Z",
+	"_postman_exported_using": "Postman/7.36.5"
+}
