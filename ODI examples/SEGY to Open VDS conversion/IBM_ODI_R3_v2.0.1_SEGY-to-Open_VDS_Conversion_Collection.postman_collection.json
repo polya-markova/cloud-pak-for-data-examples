@@ -1,0 +1,351 @@
+{
+	"info": {
+		"_postman_id": "e65a97eb-953d-477b-a331-e6a3c08880f8",
+		"name": "IBM ODI R3 v2.0.1 SEGY-to-Open VDS Conversion Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get or Refresh Access Token Copy",
+			"item": [
+				{
+					"name": "01 Get Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)\r",
+									"pm.environment.set(\"access_token\", data.access_token);\r",
+									"pm.environment.set(\"refresh_token\", data.refresh_token)  \r",
+									"pm.environment.set(\"id_token\", data.id_token);\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);   \r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{CLIENT_SECRET}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{USER_ID}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{USER_PASSWORD}}",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "openid",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{Token_Fetch_URL}}",
+							"host": [
+								"{{Token_Fetch_URL}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "02 Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// this snippet extracts the new access and id tokens and puts them to environment variables",
+									"cp = pm.environment.get(\"cloud_platform\");",
+									"var data = JSON.parse(responseBody)",
+									"pm.environment.set(\"access_token\", data.access_token);",
+									"pm.environment.set(\"id_token\", data.id_token);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/x-www-form-urlencoded"
+							},
+							{
+								"key": "Ocp-Apim-Subscription-Key",
+								"type": "text",
+								"value": "xxxxxxxx",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}",
+									"description": "Supply your client id as an environment variable",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{CLIENT_SECRET}}",
+									"description": "Supply your client secret as an environment variable",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "{{Scope}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{Token_Fetch_URL}}",
+							"host": [
+								"{{Token_Fetch_URL}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "DAG Process",
+			"item": [
+				{
+					"name": "Register Workflow",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var req = JSON.parse(pm.request.body.raw);\r",
+									"pm.environment.set(\"workflow_name\", req.workflowName);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response",
+									"pm.test(\"Status code is 200 or 201 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201 , 409]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"description\": \"This is segy-to-Open VDS conversion DAG\",\r\n  \"registrationInstructions\": {},\r\n  \"workflowName\": \"openvds_import\"\r\n}\r\n"
+						},
+						"url": {
+							"raw": "{{WORKFLOW_HOST}}/workflow",
+							"host": [
+								"{{WORKFLOW_HOST}}"
+							],
+							"path": [
+								"workflow"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Trigger Workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Status description - OK.\", function () {\r",
+									"    pm.response.to.have.status(\"OK\");\r",
+									"});\r",
+									"pm.test(\"runId is returned\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.runId).to.exist\r",
+									"});\r",
+									"pm.test(\"runId is a valid string\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.runId).to.be.a('string')\r",
+									"});\r",
+									"pm.test(\"status is submitted\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.status).to.eql(\"submitted\");\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"pm.environment.set(\"startTimeStamp\", responseJson.startTimeStamp);\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var runid = \"odi_workflow\" + _.random(1,1000000);\r",
+									"pm.environment.set(\"runid\", runid);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"executionContext\": {\r\n      \"url_connection\":\"Region=us-east-1;AccessKeyId=XXX;SecretKey=XXX;SessionToken=XXX\",\r\n        \"input_connection\":\"Region=us-east-1;AccessKeyId=XXX;SecretKey=XXX;SessionToken=XXX\",\r\n        \"segy_file\":\"ST0202R08_PS_PSDM_RAW_PP_TIME.MIG_RAW.POST_STACK.3D.JS-017534.segy\",\r\n        \"url\":\"sd://<tenant>/<subproject>/path/\"\r\n\r\n  },\r\n  \"runId\": \"{{runid}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{WORKFLOW_HOST}}/workflow/{{workflow_name}}/workflowRun",
+							"host": [
+								"{{WORKFLOW_HOST}}"
+							],
+							"path": [
+								"workflow",
+								"{{workflow_name}}",
+								"workflowRun"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
