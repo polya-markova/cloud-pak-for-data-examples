@@ -1,0 +1,867 @@
+{
+	"info": {
+		"_postman_id": "743eb12d-8500-401e-b3d9-e84e2cbe4852",
+		"name": "Sample CSV Ingestion Workflow",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Access Token",
+			"item": [
+				{
+					"name": "01 Get Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)\r",
+									"pm.environment.set(\"access_token\", data.access_token);\r",
+									"//pm.globals.set(\"access_token\", data.access_token);\r",
+									"//added this new line\r",
+									"pm.environment.set(\"refresh_token\", data.refresh_token)  \r",
+									"pm.environment.set(\"id_token\", data.id_token);\r",
+									"\r",
+									"// Check for a successful HTTP response\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"   \r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{CLIENT_ID}}",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "{{CLIENT_SECRET}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{USER_ID}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{USER_PASSWORD}}",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "openid",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{Token_Fetch_URL}}",
+							"host": [
+								"{{Token_Fetch_URL}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ingestion Workflow",
+			"item": [
+				{
+					"name": "02 Create Legal Tag",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"tagName\", \"PerfTest-Legal-Tag-\" + _.random(1, 9999999));",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response",
+									"var data = JSON.parse(responseBody)",
+									"pm.test(\"Status code is 200 or 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"",
+									"pm.environment.set(\"LegalTagName\", data.name);",
+									"",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"{{tagName}}\",\n    \"description\": \"Legal Tag added for Well\",\n    \"properties\": {\n        \"contractId\": \"123456\",\n        \"countryOfOrigin\": [\n            \"US\",\n            \"CA\"\n        ],\n        \"dataType\": \"Third Party Data\",\n        \"exportClassification\": \"EAR99\",\n        \"originator\": \"Schlumberger\",\n        \"personalData\": \"No Personal Data\",\n        \"securityClassification\": \"Private\",\n        \"expirationDate\": \"2025-12-25\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{LEGAL_HOST}}/legaltags",
+							"host": [
+								"{{LEGAL_HOST}}"
+							],
+							"path": [
+								"legaltags"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "03 Add A Schema",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)\r",
+									"var resp_code= pm.response.code;\r",
+									"pm.test(\"Status code is 200 or 201 or 400\", function () {\r",
+									"    pm.expect(resp_code).to.be.oneOf([200, 201, 400]);\r",
+									"});\r",
+									"if ((resp_code == 200) || (resp_code == 201)) {\r",
+									"    pm.environment.set(\"kind\", data.schemaIdentity.id);    \r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var req = JSON.parse(pm.request.body.raw);\r",
+									"\r",
+									"pm.environment.set(\"schemaVersionMajor\", req.schemaInfo.schemaIdentity.schemaVersionMajor);\r",
+									"pm.environment.set(\"schemaVersionMinor\", req.schemaInfo.schemaIdentity.schemaVersionMinor);\r",
+									"pm.environment.set(\"schemaVersionPatch\", req.schemaInfo.schemaIdentity.schemaVersionPatch);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"schemaInfo\": {\r\n    \"schemaIdentity\": {\r\n      \"authority\": \"opendes\",\r\n      \"source\": \"osdu\",\r\n      \"entityType\": \"wellbore-master\",\r\n      \"schemaVersionMajor\": \"11\",\r\n      \"schemaVersionMinor\": \"5\",\r\n      \"schemaVersionPatch\": \"1\"\r\n    },\r\n    \"createdBy\": \"IBM-Test\",\r\n    \"dateCreated\": \"2020-06-10\",\r\n    \"status\": \"DEVELOPMENT\",\r\n    \"scope\": \"INTERNAL\"\r\n  },\r\n  \"schema\": {\r\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\r\n  \"$license\": \"Copyright 2017-2020, Schlumberger\\n\\nLicensed under the Apache License, Version 2.0 (the \\\"License\\\");\\nyou may not use this file except in compliance with the License.\\nYou may obtain a copy of the License at\\n\\nhttp://www.apache.org/licenses/LICENSE-2.0\\n\\nUnless required by applicable law or agreed to in writing, software\\ndistributed under the License is distributed on an \\\"AS IS\\\" BASIS,\\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\\nSee the License for the specific language governing permissions and\\nlimitations under the License.\\n\",\r\n  \"description\": \"The wellbore schema. Used to capture the general information about a wellbore. This information is sometimes called a \\\"wellbore header\\\". A wellbore represents the path from surface to a unique bottomhole location. The wellbore object is uniquely identified within the context of one well object.\",\r\n  \"title\": \"Wellbore\",\r\n  \"type\": \"object\",\r\n  \"definitions\": {\r\n    \"wellboreData\": {\r\n      \"description\": \"The domain specific data container for a wellbore.\",\r\n      \"title\": \"Wellbore Data\",\r\n      \"type\": \"object\",\r\n      \"properties\": {\r\n        \"UWI\": {\r\n          \"description\": \"The unique wellbore identifier, aka. API number, US well number or UBHI. Codes can have 10, 12 or 14 digits depending on the availability of directional sidetrack (2 digits) and event sequence codes (2 digits).\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"ocean:UWI\",\r\n            \"witsml:SuffixAPI\",\r\n            \"drillplan:uwi\"\r\n          ],\r\n          \"title\": \"Unique Wellbore Identifier\",\r\n          \"type\": \"string\",\r\n          \"example\": [\r\n            \"SP435844921288\",\r\n            \"42-501-20130-01-02\"\r\n          ],\r\n\t\t  \"naturalKey\": \"2\"\r\n        },\r\n        \"WELLBORE_NAME\": {\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Wellbore Name\",\r\n          \"type\": \"string\",\r\n          \"example\": \"SMP G09995 001S0B1\",\r\n\t\t  \"naturalKey\": \"3\"\r\n        },\r\n        \"WELLBORE_NUMBER\": {\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Wellbore Number\",\r\n          \"type\": \"string\",\r\n          \"example\": \"001S0B1\",\r\n\t\t  \"naturalKey\": \"4\"\r\n        },\r\n        \"SPUD_DATE\": {\r\n          \"format\": \"date\",\r\n          \"description\": \"The date and time when activities to drill the borehole begin to create a hole in the earth. For a sidetrack, this is the date kickoff operations began. The format follows ISO 8601 YYYY-MM-DD extended format\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:DTimKickoff\",\r\n            \"ocean:SPUD_DATE\",\r\n            \"drillplan:spud_date\"\r\n          ],\r\n          \"title\": \"Spud Date\",\r\n          \"type\": \"string\",\r\n          \"example\": \"2013-03-22\",\r\n\t\t  \"naturalKey\": \"1\"\r\n        },\r\n        \"MD\": {\r\n          \"x-slb-measurement\": \"Measured Depth\",\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Measured Depth\",\r\n          \"example\": [\r\n            20960,\r\n            \"TBD\"\r\n          ],\r\n\t\t  \"naturalKey\": \"5\"\r\n        },\r\n        \"TVD\": {\r\n          \"x-slb-measurement\": \"True Vertical Depth\",\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"True Vertical Depth\",\r\n          \"example\": [\r\n            20711,\r\n            \"TBD\"\r\n          ],\r\n\t\t  \"naturalKey\": \"6\"\r\n        },\r\n        \"OPERATOR\": {\r\n          \"description\": \"The operator of the wellbore.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"ocean:Operator\",\r\n            \"witsml:Operator\"\r\n          ],\r\n          \"title\": \"Operator\",\r\n          \"type\": \"string\",\r\n          \"example\": \"Anadarko Petroleum\",\r\n\t\t  \"naturalKey\": \"7\"\r\n        },\r\n        \"LONGUITUDE\": {\r\n          \"x-slb-measurement\": \"Longuitude\",\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Longuitude\",\r\n          \"example\": [\r\n            -119.2,\r\n            \"TBD\"\r\n          ],\r\n\t\t  \"naturalKey\": \"8\"\r\n        },\r\n        \"LATITUDE\": {\r\n          \"x-slb-measurement\": \"Latitude\",\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Latitude\",\r\n          \"example\": [\r\n            60.2,\r\n            \"TBD\"\r\n          ],\r\n\t\t  \"naturalKey\": \"9\"\r\n        },\r\n        \"ELEVATION_REF\": {\r\n          \"description\": \"Elevation reference used for the measurements\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Elevation reference\",\r\n          \"type\": \"string\",\r\n          \"example\": \"MSL\",\r\n\t\t  \"naturalKey\": \"9\"\r\n        },\r\n        \"ELEVATION\": {\r\n          \"x-slb-measurement\": \"Elevation\",\r\n          \"description\": \"TBD\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Elevation\",\r\n          \"example\": [\r\n            84,\r\n            \"TBD\"\r\n          ],\r\n\t\t  \"naturalKey\": \"10\"\r\n        },\r\n        \"LEASE\": {\r\n          \"description\": \"The lease name, to which the wellbore belongs.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:LEASE\"\r\n          ],\r\n          \"title\": \"LEASE\",\r\n          \"type\": \"string\",\r\n          \"example\": \"SMP G09995\",\r\n\t\t  \"naturalKey\": \"11\"\r\n        },\r\n        \"FIELD\": {\r\n          \"description\": \"The field name, to which the wellbore belongs.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:Field\"\r\n          ],\r\n          \"title\": \"Field\",\r\n          \"type\": \"string\",\r\n          \"example\": \"ATWATER VLLY B 8\",\r\n\t\t  \"naturalKey\": \"12\"\r\n        },\r\n        \"BASIN\": {\r\n          \"description\": \"The basin name, to which the wellbore belongs.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:BASIN\"\r\n          ],\r\n          \"title\": \"Basin\",\r\n          \"type\": \"string\",\r\n          \"example\": \"ATWATER\",\r\n\t\t  \"naturalKey\": \"13\"\r\n        },\r\n        \"FORMATION_AT_TD\": {\r\n          \"description\": \"The formation name at the wellbore total depth\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:FORMATION_AT_TD\"\r\n          ],\r\n          \"title\": \"Formation at TD\",\r\n          \"type\": \"string\",\r\n          \"example\": \"MIOCENE LOWER\",\r\n\t\t  \"naturalKey\": \"14\"\r\n        },\r\n        \"COUNTRY\": {\r\n          \"description\": \"The country, in which the wellbore is located. The country name follows the convention in ISO 3166-1 'English short country name', see https://en.wikipedia.org/wiki/ISO_3166-1\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:Country\"\r\n          ],\r\n          \"title\": \"Country\",\r\n          \"type\": \"string\",\r\n          \"example\": [\r\n            \"United States of America\"\r\n          ],\r\n\t\t  \"naturalKey\": \"15\"\r\n        },\r\n        \"STATE\": {\r\n          \"description\": \"The state, in which the wellbore is located.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:State\"\r\n          ],\r\n          \"title\": \"State\",\r\n          \"type\": \"string\",\r\n          \"example\": [\r\n            \"Texas\"\r\n          ],\r\n\t\t  \"naturalKey\": \"16\"\r\n        },\r\n        \"COUNTY\": {\r\n          \"description\": \"The county, in which the wellbore is located.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:County\"\r\n          ],\r\n          \"title\": \"County\",\r\n          \"type\": \"string\",\r\n          \"example\": [\r\n            \"ATWATER VALLEY\"\r\n          ],\r\n\t\t  \"naturalKey\": \"17\"\r\n        },\r\n        \"CLASS\": {\r\n          \"description\": \"The current class of the wellbore\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"class\",\r\n          \"type\": \"string\",\r\n          \"example\": \"NEW FIELD WILDCAT\",\r\n\t\t  \"naturalKey\": \"18\"\r\n        },\r\n        \"STATUS\": {\r\n          \"description\": \"The current status of the wellbore\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Status\",\r\n          \"type\": \"string\",\r\n          \"example\": \"DRY & ABANDONED\",\r\n\t\t  \"naturalKey\": \"19\"\r\n        },\r\n        \"STATUS_DATE\": {\r\n          \"format\": \"date\",\r\n          \"description\": \"The date and time of the current status of the wellbore. The format follows ISO 8601 YYYY-MM-DD extended format\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:DTimKickoff\",\r\n            \"ocean:STATUS_DATE\",\r\n            \"drillplan:STATUS_DATE\"\r\n          ],\r\n          \"title\": \"Status Date\",\r\n          \"type\": \"string\",\r\n          \"example\": \"2013-03-22\",\r\n\t\t  \"naturalKey\": \"20\"\r\n        },\r\n        \"PERMIT_NUMBER\": {\r\n          \"description\": \"Ther permit number for the wellbore\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Permit Number\",\r\n          \"type\": \"string\",\r\n          \"example\": \"SMP-09995\",\r\n\t\t  \"naturalKey\": \"21\"\r\n        },\r\n        \"PERMIT_DATE\": {\r\n          \"format\": \"date\",\r\n          \"description\": \"The date and time when the wellbore permit was issued. The format follows ISO 8601 YYYY-MM-DD extended format\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:DTimKickoff\",\r\n            \"ocean:PERMIT_DATE\",\r\n            \"drillplan:PERMIT_DATE\"\r\n          ],\r\n          \"title\": \"Permit Date\",\r\n          \"type\": \"string\",\r\n          \"example\": \"2013-03-22\",\r\n\t\t  \"naturalKey\": \"22\"\r\n        },\r\n        \"INITIAL_COMPLETION_DATE\": {\r\n          \"format\": \"date\",\r\n          \"description\": \"The date and time of the initial completion of the wellbore. The format follows ISO 8601 YYYY-MM-DD extended format\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"witsml:DTimKickoff\",\r\n            \"ocean:INITIAL_COMPLETION_DATE\",\r\n            \"drillplan:INITIAL_COMPLETION_DATE\"\r\n          ],\r\n          \"title\": \"Initial Completion Date\",\r\n          \"type\": \"string\",\r\n          \"example\": \"2013-03-22\",\r\n\t\t  \"naturalKey\": \"23\"\r\n        },\r\n        \"WELLBORE_SHAPE\": {\r\n          \"description\": \"The shape of the wellbore\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Wellbore Shape\",\r\n          \"type\": \"string\",\r\n          \"example\": [\r\n\t\t\t\"DIRECTIONAL\",\r\n\t\t\t\"VERTICAL\"\r\n\t\t  ],\r\n\t\t  \"naturalKey\": \"24\"\r\n        },\r\n        \"ORIGINAL_OPERATOR\": {\r\n          \"description\": \"The original operator of the wellbore.\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"ocean:Operator\",\r\n            \"witsml:Operator\"\r\n          ],\r\n          \"title\": \"Original Operator\",\r\n          \"type\": \"string\",\r\n          \"example\": \"Anadarko Petroleum\",\r\n\t\t  \"naturalKey\": \"25\"\r\n        },\r\n        \"EPSG_CODE\": {\r\n          \"description\": \"EPSG code of the CRS\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"EPSG Code\",\r\n          \"type\": \"string\",\r\n          \"example\": \"4326\",\r\n\t\t  \"naturalKey\": \"26\"\r\n        },\r\n        \"CRS\": {\r\n          \"description\": \"Wellbore location CRS\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"CRS\",\r\n          \"type\": \"string\",\r\n          \"example\": \"World Geodetic System 1984\",\r\n\t\t  \"naturalKey\": \"27\"\r\n        },\r\n        \"UNIT_SYSTEM\": {\r\n          \"description\": \"Unit system used for the wellbore measurements\",\r\n          \"x-slb-aliasProperties\": [\r\n            \"TBD:TBD\"\r\n          ],\r\n          \"title\": \"Unit Sustem\",\r\n          \"type\": \"string\",\r\n          \"example\": \"English\",\r\n\t\t  \"naturalKey\": \"28\"\r\n        }\r\n      },\r\n      \"$id\": \"definitions/wellboreData\"\r\n    }\r\n  },\r\n  \"properties\": {\r\n    \"ancestry\": {\r\n      \"description\": \"The links to data, which constitute the inputs.\",\r\n      \"title\": \"Ancestry\",\r\n      \"$ref\": \"#/definitions/linkList\"\r\n    },\r\n    \"data\": {\r\n      \"description\": \"Wellbore data container\",\r\n      \"title\": \"Wellbore Data\",\r\n      \"$ref\": \"#/definitions/wellboreData\"\r\n    },\r\n    \"kind\": {\r\n      \"default\": \"slb:osdudemo:wellbore:1.0.0\",\r\n      \"description\": \"OSDU demo wellbore kind specification\",\r\n      \"title\": \"Wellbore Kind\",\r\n      \"type\": \"string\"\r\n    },\r\n    \"meta\": {\r\n      \"description\": \"The meta data section linking the 'unitKey', 'crsKey' to self-contained definitions (persistableReference)\",\r\n      \"title\": \"Frame of Reference Meta Data\",\r\n      \"type\": \"array\",\r\n      \"items\": {\r\n        \"$ref\": \"#/definitions/metaItem\"\r\n      }\r\n    },\r\n    \"legal\": {\r\n      \"description\": \"The geological interpretation's legal tags\",\r\n      \"title\": \"Legal Tags\",\r\n      \"$ref\": \"#/definitions/legal\"\r\n    },\r\n    \"acl\": {\r\n      \"description\": \"The access control tags associated with this entity.\",\r\n      \"title\": \"Access Control List\",\r\n      \"$ref\": \"#/definitions/tagDictionary\"\r\n    },\r\n    \"id\": {\r\n      \"description\": \"The unique identifier of the wellbore\",\r\n      \"title\": \"Wellbore ID\",\r\n      \"type\": \"string\"\r\n    },\r\n    \"type\": {\r\n      \"description\": \"The reference entity type as declared in common:metadata:entity:*.\",\r\n      \"title\": \"Entity Type\",\r\n      \"type\": \"string\"\r\n    },\r\n    \"version\": {\r\n      \"format\": \"int64\",\r\n      \"description\": \"The version number of this wellbore; set by the framework.\",\r\n      \"title\": \"Entity Version Number\",\r\n      \"type\": \"number\",\r\n      \"example\": \"1040815391631285\"\r\n    }\r\n  },\r\n  \"$id\": \"https://slb-swt.visualstudio.com/data-management/Ingestion%20Services/_git/wke-schema?path=%2Fdomains%2Fwell%2Fjson_schema%2Fslb_wke_wellbore.json&version=GBmaster\"\r\n}\r\n}"
+						},
+						"url": {
+							"raw": "{{SCHEMA_HOST}}/schema",
+							"host": [
+								"{{SCHEMA_HOST}}"
+							],
+							"path": [
+								"schema"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "04 Get schema",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Status description - OK\", function () {\r",
+									"    pm.response.to.have.status(\"OK\");\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Cache-Control",
+								"value": "no-store",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{SCHEMA_HOST}}/schema?authority=opendes&source=osdu&schemaVersionMajor={{schemaVersionMajor}}&schemaVersionMinor={{schemaVersionMinor}}&schemaVersionPatch={{schemaVersionPatch}}",
+							"host": [
+								"{{SCHEMA_HOST}}"
+							],
+							"path": [
+								"schema"
+							],
+							"query": [
+								{
+									"key": "authority",
+									"value": "opendes"
+								},
+								{
+									"key": "source",
+									"value": "osdu"
+								},
+								{
+									"key": "schemaVersionMajor",
+									"value": "{{schemaVersionMajor}}"
+								},
+								{
+									"key": "schemaVersionMinor",
+									"value": "{{schemaVersionMinor}}"
+								},
+								{
+									"key": "schemaVersionPatch",
+									"value": "{{schemaVersionPatch}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "05 Get Upload Signed URL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Status description - OK\", function () {\r",
+									"    pm.response.to.have.status(\"OK\");\r",
+									"});\r",
+									"\r",
+									"pm.environment.set(\"SignedURL\", data.Location.SignedURL);\r",
+									"pm.environment.set(\"fileSource\", data.Location.FileSource);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{FILE_HOST}}/files/uploadURL",
+							"host": [
+								"{{FILE_HOST}}"
+							],
+							"path": [
+								"files",
+								"uploadURL"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "06 Upload File Using SignedURL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response\r",
+									"pm.test(\"Status code is 200 or 201\", function () {\r",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "file",
+							"file": {
+								"src": "/C:/Manish/office/Project/Performance_Test/Sample/Data/New_WellBore_Data_2.csv"
+							}
+						},
+						"url": {
+							"raw": "{{SignedURL}}",
+							"host": [
+								"{{SignedURL}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "07 Upload File Metadata",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if(pm.environment.get(\"UseDatasetService\") != \"true\"){\r",
+									"    // Ensure the API was able to send a successful response\r",
+									"    pm.test(\"Status code is 201\", function () {\r",
+									"        pm.response.to.have.status(201);\r",
+									"    });\r",
+									"    pm.test(\"id is returned\", function () {\r",
+									"        const responseJson = pm.response.json();\r",
+									"        pm.expect(responseJson.id).to.exist\r",
+									"    });\r",
+									"    pm.test(\"id is returned\", function () {\r",
+									"        const responseJson = pm.response.json();\r",
+									"        pm.expect(responseJson.id).to.a('string')\r",
+									"        pm.environment.set(\"csvRecordId\", responseJson.id)\r",
+									"    });\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-ms-blob-type",
+								"value": "BlockBlob",
+								"type": "text"
+							},
+							{
+								"key": "data-partition-id",
+								"value": "{{data-partition-id}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"data\": {\r\n        \"Endian\": \"BIG\",\r\n        \"Checksum\": \"string\",\r\n        \"DatasetProperties\": {\r\n            \"FileSourceInfo\": {\r\n                \"FileSource\": \"{{fileSource}}\",\r\n                \"Name\": \"TestCSV_status.csv\"\r\n            }\r\n        },\r\n        \"ExtensionProperties\": {\r\n            \"Classification\": \"Raw File\",\r\n            \"Description\": \"An text further describing this file example.\",\r\n            \"ExternalIds\": [\r\n                \"string\"\r\n            ],\r\n            \"FileDateCreated\": {},\r\n            \"FileDateModified\": {},\r\n            \"FileContentsDetails\": {\r\n                \"TargetKind\": \"{{kind}}\",\r\n                \"FileType\": \"csv\"\r\n            }\r\n        },\r\n        \"EncodingFormatTypeID\": \"string\",\r\n        \"Name\": \"TestCSV_status.csv\",\r\n        \"SchemaFormatTypeID\": \"string\"\r\n    },\r\n    \"meta\": [],\r\n    \"id\": \"{{data-partition-id}}:dataset--File.Generic:3f2888ecc58c468881bf60c8f90cfa39\",\r\n    \"version\": 1613026613300181,\r\n    \"kind\": \"{{data-partition-id}}:wks:dataset--File.Generic:1.0.0\",\r\n    \"acl\": {\r\n        \"viewers\": [\r\n            \"data.default.viewers@{{data-partition-id}}{{domain}}\"\r\n        ],\r\n        \"owners\": [\r\n            \"data.default.viewers@{{data-partition-id}}{{domain}}\"\r\n        ]\r\n    },\r\n    \"legal\": {\r\n        \"legaltags\": [\r\n            \"{{LegalTagName}}\"\r\n        ],\r\n        \"otherRelevantDataCountries\": [\r\n            \"US\"\r\n        ],\r\n        \"status\": \"compliant\"\r\n    },\r\n    \"tags\": {\r\n        \"dataflowId\": \"test-dataflowid-proxy\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{FILE_HOST}}/files/metadata",
+							"host": [
+								"{{FILE_HOST}}"
+							],
+							"path": [
+								"files",
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "08 Register Workflow",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"workflow_name\", \"csv-parser-dag\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response",
+									"pm.test(\"Status code is 200 or 201 or 409\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201 , 409]);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"description\": \"This is csv parser workflow\",\r\n  \"registrationInstructions\": {},\r\n  \"workflowName\": \"{{workflow_name}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{WORKFLOW_HOST}}/v1/workflow",
+							"host": [
+								"{{WORKFLOW_HOST}}"
+							],
+							"path": [
+								"v1",
+								"workflow"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "09 Trigger Workflow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Ensure the API was able to send a successful response\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Status description - OK.\", function () {\r",
+									"    pm.response.to.have.status(\"OK\");\r",
+									"});\r",
+									"pm.test(\"runId is returned\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.runId).to.exist\r",
+									"});\r",
+									"pm.test(\"runId is a valid string\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.runId).to.be.a('string')\r",
+									"});\r",
+									"pm.test(\"status is submitted\", function () {\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.status).to.eql(\"submitted\");\r",
+									"});\r",
+									"\r",
+									"const responseJson = pm.response.json();\r",
+									"pm.environment.set(\"startTimeStamp\", responseJson.startTimeStamp);\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var runid = \"test_workflow\" + _.random(1,1000000);\r",
+									"pm.environment.set(\"runid\", runid);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"executionContext\": {\r\n      \"id\": \"{{csvRecordId}}\",\r\n      \"dataPartitionId\" : \"opendes\"\r\n  },\r\n  \"runId\": \"{{runid}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{WORKFLOW_HOST}}/v1/workflow/{{workflow_name}}/workflowRun",
+							"host": [
+								"{{WORKFLOW_HOST}}"
+							],
+							"path": [
+								"v1",
+								"workflow",
+								"{{workflow_name}}",
+								"workflowRun"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10 Airflow Dag Run Status",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var moment = require('moment');\r",
+									"console.log('Converted time',pm.environment.get(\"startTimeStamp\"));\r",
+									"var utcDateFormatted = moment(Number(pm.environment.get(\"startTimeStamp\"))).utc().format(moment.HTML5_FMT.DATETIME_LOCAL_SECONDS);\r",
+									"pm.environment.set(\"dagStartTimeUTC\", utcDateFormatted);\r",
+									"console.log('Converted time',utcDateFormatted);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)",
+									"var maxNumberOfTries = 5;",
+									"var sleepBetweenTries = 15000;",
+									"var expectedState = 'success';",
+									"console.log('Current state',data.state);",
+									"if (!pm.environment.get(\"collection_tries\")) {",
+									"    pm.environment.set(\"collection_tries\", 1);",
+									"}",
+									"if ((data.state != expectedState) && (pm.environment.get(\"collection_tries\") < maxNumberOfTries)) {",
+									"    console.log(\"Retry ......\");",
+									"     var tries = parseInt(pm.environment.get(\"collection_tries\"), 10);",
+									"     pm.environment.set(\"collection_tries\", tries + 1);",
+									"     setTimeout(function() {}, sleepBetweenTries);",
+									"     postman.setNextRequest(pm.info.requestId);",
+									" } else {    ",
+									"     pm.environment.unset(\"collection_tries\");",
+									"     pm.test(\"Status code is \" + pm.response.code, function () {",
+									"          pm.response.to.have.status(200);",
+									"     });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{airflow_user_password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{airflow_user}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{AIRFLOW_HOST}}/api/experimental/dags/{{workflow_name}}/dag_runs/{{dagStartTimeUTC}}/tasks/csv-parser",
+							"host": [
+								"{{AIRFLOW_HOST}}"
+							],
+							"path": [
+								"api",
+								"experimental",
+								"dags",
+								"{{workflow_name}}",
+								"dag_runs",
+								"{{dagStartTimeUTC}}",
+								"tasks",
+								"csv-parser"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Validate Ingested Records",
+			"item": [
+				{
+					"name": "11 Search Records For Schema",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"setTimeout(function() {}, 12000);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code to be 200\", function () {\r",
+									"    pm.response.to.have.status(200);   \r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"kind\": \"{{kind}}\"    \r\n}"
+						},
+						"url": {
+							"raw": "{{SEARCH_HOST}}/query",
+							"host": [
+								"{{SEARCH_HOST}}"
+							],
+							"path": [
+								"query"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12 Get all records for a kind",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var data = JSON.parse(responseBody)",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Status description - OK\", function () {",
+									"    pm.response.to.have.status(\"OK\");",
+									"});",
+									"//pm.environment.set(\"recordArray\", JSON.stringify(data.results));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "This value should be the desired data partition id.",
+								"key": "data-partition-id",
+								"type": "text",
+								"value": "{{data-partition-id}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{STORAGE_HOST}}/query/records?kind={{kind}}",
+							"host": [
+								"{{STORAGE_HOST}}"
+							],
+							"path": [
+								"query",
+								"records"
+							],
+							"query": [
+								{
+									"key": "cursor",
+									"value": "",
+									"description": "string",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "",
+									"description": "integer (int32)",
+									"disabled": true
+								},
+								{
+									"key": "kind",
+									"value": "{{kind}}"
+								}
+							]
+						},
+						"description": "Get all kinds\nThe API returns a list of all kinds in the specific {Slb-Data-Partition-Id}. Required roles: 'users.datalake.editors' or 'users.datalake.admins'."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
