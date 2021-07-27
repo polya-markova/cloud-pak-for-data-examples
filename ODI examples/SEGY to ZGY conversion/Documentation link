@@ -1,2 +1,2 @@
 Convert a SEGY file to ZGY format by using the IBM ODI Seismic DDMS APIs and utilities.
-For more information, see 
+For more information, see https://www.ibm.com/docs/en/cloud-paks/cp-data/3.5.0?topic=conversion-segy-zgy
