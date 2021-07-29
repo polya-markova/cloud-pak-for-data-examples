@@ -1,2 +1,2 @@
 To ingest a Manifest data file into the Open Data for Industries (ODI) storage layer, you use the ODI ingestion workflow.
-For more information, see
+For more information, see https://www.ibm.com/docs/en/cloud-paks/cp-data/3.5.0?topic=data-sample-steps-ingest-manifest-files
