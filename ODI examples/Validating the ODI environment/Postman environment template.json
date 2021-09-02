@@ -28,6 +28,16 @@
 			"enabled": true
 		},
 		{
+			"key": "PART_USER_ID",
+			"value": "partition-service-admin",
+			"enabled": true
+		},		
+		{
+			"key": "PART_USER_PASSWORD",
+			"value": "KQb49EqxpuXhNG-f",
+			"enabled": true
+		},
+		{
 			"key": "osdu-cpd",
 			"value": "{{osdu-cpd-url}}",
 			"enabled": true
@@ -45,6 +55,11 @@
 		{
 			"key": "refresh_token",
 			"value": "{{refresh_token}}",
+			"enabled": true
+		},
+		{
+			"key": "ent_v2_access_token",
+			"value": "{{ent_v2_access_token}}",
 			"enabled": true
 		},
 		{
@@ -76,14 +91,12 @@
 			"key": "cloud_platform",
 			"value": "IBM",
 			"enabled": true
-		},
-				
+		},				
 		{
 			"key": "expiredToken",
 			"value": "",
 			"enabled": true
-		},
-		
+		},		
 		{
 			"key": "tenantid",
 			"value": "",
@@ -126,7 +139,7 @@
 		},
 		{
 			"key": "New_OwnerDataGroup",
-			"value": "data.default.owner",
+			"value": "data.default.owners",
 			"enabled": true
 		},
 		{
@@ -217,6 +230,11 @@
 		{
 			"key": "PARTITION_HOST",
 			"value": "https://{{osdu-cpd}}/osdu-partition/api/partition/v1",
+			"enabled": true
+		},
+		{
+			"key": "ENTITLEMENTS_V2_HOST",
+			"value": "https://{{osdu-cpd}}/osdu-entitlements-v2/api/entitlements/v2",
 			"enabled": true
 		}
 		
