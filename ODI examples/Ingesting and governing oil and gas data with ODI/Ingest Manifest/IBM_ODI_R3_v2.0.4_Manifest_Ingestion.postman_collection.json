@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "14d4d040-2daf-40cf-87e9-dfe84029647c",
-		"name": "IBM ODI R3 v2.0.5 Manifest Ingestion",
+		"name": "IBM ODI R3 v2.0.4 Manifest Ingestion",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
