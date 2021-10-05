@@ -242,6 +242,11 @@
 			"key": "AIRFLOW_HOST",
 			"value": "{{airflow_web_routes}}",
 			"enabled": true
+		},
+		{
+			"key": "schema_default_authority",
+			"value": "osdu",
+			"enabled": true
 		}
 		
 	],
