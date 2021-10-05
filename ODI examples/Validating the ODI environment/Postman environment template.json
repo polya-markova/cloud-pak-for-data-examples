@@ -1,6 +1,6 @@
 {
 	"id": "215af15f-9e89-4b98-b970-835f17252c51",
-	"name": "OSDU R3 IBM ODI v2.0.0 ENV",
+	"name": "OSDU R3 IBM ODI v2.0.5 ENV",
 	"values": [
 		{
 			"key": "TENANT_ID",
@@ -164,7 +164,7 @@
 		},
 		{
 			"key": "WORKFLOW_HOST",
-			"value": "https://{{osdu-cpd}}/osdu-workflow/api/workflow/v1",
+			"value": "https://{{osdu-cpd}}/osdu-workflow/api/workflow",
 			"enabled": true
 		},
 		{
@@ -235,6 +235,12 @@
 		{
 			"key": "ENTITLEMENTS_V2_HOST",
 			"value": "https://{{osdu-cpd}}/osdu-entitlements-v2/api/entitlements/v2",
+			"enabled": true
+		},
+		,
+		{
+			"key": "AIRFLOW_HOST",
+			"value": "{{airflow_web_routes}}",
 			"enabled": true
 		}
 		
