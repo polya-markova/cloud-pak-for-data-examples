@@ -1,6 +1,6 @@
 {
 	"id": "215af15f-9e89-4b98-b970-835f17252c51",
-	"name": "OSDU R3 IBM ODI v2.0.5 ENV",
+	"name": "OSDU R3 IBM ODI v2.0.4 ENV",
 	"values": [
 		{
 			"key": "TENANT_ID",
