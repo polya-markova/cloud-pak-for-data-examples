@@ -237,7 +237,6 @@
 			"value": "https://{{osdu-cpd}}/osdu-entitlements-v2/api/entitlements/v2",
 			"enabled": true
 		},
-		,
 		{
 			"key": "AIRFLOW_HOST",
 			"value": "{{airflow_web_routes}}",
